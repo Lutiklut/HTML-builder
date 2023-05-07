@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const assets = path.join(__dirname, 'assets');
-const dir = path.join(__dirname, 'project-dist/assets');
+const dir = path.join(__dirname, 'project-dist');
 const template = path.join(__dirname, 'template.html');
 const index  = path.join(__dirname,'project-dist', 'index.html');
 
@@ -13,9 +13,7 @@ fs.mkdir(path.join(__dirname, 'project-dist'),
 
 function copyDir(src,srcCopy) {
   fs.rm(srcCopy, { recursive: true }, (err) => {
-    if (err) {
-      console.error(err);
-    }     
+    if (err) throw err;    
     fs.mkdir(srcCopy, { recursive: true } ,(err) => 
       err && console.error(err));
     fs.readdir(src, {withFileTypes: true}, (err, files) => {
@@ -23,13 +21,10 @@ function copyDir(src,srcCopy) {
       for(let file of files) {
         const pat = path.join(src, file.name);
         const patCopy = path.join(srcCopy, file.name);
-        console.log(pat);
-        if(file.isFile()) {
+        if(file.isFile()) 
           fs.copyFile(pat, patCopy, (error)=> 
-            error&&console.error(error)
-          );
-        }
-        if (file.isDirectory()) copyDir(pat, patCopy);
+            error&&console.error(error));
+        if (file.isDirectory()) copyDir(pat, patCopy); 
       }
     });
   });
@@ -49,10 +44,8 @@ fs.readdir(path.join(__dirname,'styles'), {withFileTypes:true}, (err, files) => 
       if (typeFile === 'css') {
         const readableStream = fs.createReadStream(pathF, 'utf-8');
         let variab='';
-      
         readableStream.on('data', (a) => { variab+=a;
-        });
-          
+        });  
         readableStream.on('end', () => { styleCss.write(variab);
           console.log('');
         });
@@ -66,15 +59,15 @@ fs.readdir(path.join(__dirname,'styles'), {withFileTypes:true}, (err, files) => 
 
 fs.copyFile(template, index, (err) => err && console.error(err));
 fs.readFile( template,'utf-8', (err,data ) => {
-  if(err) console.error(err);
+  if (err) throw err;
   const tagFile =  data.match(/{{\w+}}/gm);
   for (let tag of tagFile) {
     const tpath = path.join(__dirname,'components', `${tag.slice(2, -2)}.html`);
     fs.readFile(tpath, 'utf-8', (err, tags) => {
-      if (err) return console.error(err);
+      if (err) throw err;
       data = data.replace(tag, tags);
       fs.rm(index, { recursive: true, force: true }, (err) => {
-        if (err) return console.error(err);
+        if (err) throw err;
         const indexFile = fs.createWriteStream(path.join(__dirname, 'project-dist', 'index.html'));
         indexFile.write(data);
       });
